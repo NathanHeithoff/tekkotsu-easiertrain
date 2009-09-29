@@ -72,13 +72,22 @@ class EasierTrain(tk.Tk):
         self.highlight_pic = None # printed to self.canvas
         self.canvas = None
 
-        #FIXME program will error if any non-images are in the directory
         #Populates self.imgpaths with full paths to images in the directory
         for item in os.listdir(imgdir):
             relpath = os.path.join(imgdir,item)
+
+            #Omit directories
             if os.path.isdir( relpath ):
                 print "Omitting directory", relpath
                 continue
+
+            #Weed out files that are not compatible with PIL
+            try:
+                tmpImg = Image.open( relpath )
+            except(IOError):
+                    print "Not a compatible image file", relpath
+                    continue
+
             print "Loading file", relpath
             self.imgpaths.append( relpath )
             self.threshold_list.append(250)
