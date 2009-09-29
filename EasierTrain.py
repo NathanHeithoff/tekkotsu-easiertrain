@@ -39,6 +39,7 @@ import os
 import Tkinter as tk
 import ImageTk
 import generator
+import stat #verify image files
 
 class EasierTrain(tk.Tk):
     '''
@@ -71,12 +72,16 @@ class EasierTrain(tk.Tk):
         self.highlight_pic = None # printed to self.canvas
         self.canvas = None
 
-        #FIXME program will crash if any non-images are in the directory
+        #FIXME program will error if any non-images are in the directory
         #Populates self.imgpaths with full paths to images in the directory
-        for root, dirs, files in os.walk(imgdir):
-            for f in files:
-                self.imgpaths.append( os.path.join(imgdir,f) )
-                self.threshold_list.append(250)
+        for item in os.listdir(imgdir):
+            relpath = os.path.join(imgdir,item)
+            if os.path.isdir( relpath ):
+                print "Omitting directory", relpath
+                continue
+            print "Loading file", relpath
+            self.imgpaths.append( relpath )
+            self.threshold_list.append(250)
 
         self.initialize()
 
