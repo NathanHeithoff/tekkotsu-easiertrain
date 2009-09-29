@@ -570,9 +570,9 @@ if __name__ == "__main__":
     #    app = EasierTrain( None, '.' )
     #else:
     
-    #OPTIONAL uncomment these lines if psyco is available on your platform
-    #import psyco
-    #psyco.full()
+    #OPTIONAL comment these lines if psyco is available on your platform
+    import psyco
+    psyco.full()
     
     app = EasierTrain( None, sys.argv[1] )
     app.title( 'EasierTrain' )
