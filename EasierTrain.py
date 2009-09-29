@@ -364,16 +364,22 @@ class EasierTrain(tk.Tk):
         self.scale.set(int(i)) # change the value of the scale
         self.OnScaleRelease(None)
 
-    def OnNextClick(self):
+    def PrevNextHandler(self, goToNext=True):
         '''
-            Loads the next picture.
+            Handles request for previous or next image.
+            Assumes next image was requested unless otherwise indicated.
             Preserves selection of the previous pictures.
-        '''
+        ''' 
+        
+        target = 1
+        if goToNext==False:
+            target = -1 
+
         # store the current threshold for later reference
         self.threshold_list[self.img_index] = self.scale.get()
 
         # increment to the next image
-        self.img_index = (self.img_index+1) % len(self.imgpaths)
+        self.img_index = (self.img_index+target) % len(self.imgpaths)
 
         # restore the threshold of the new image, if any
         self.scale.set( self.threshold_list[self.img_index] )
@@ -397,42 +403,19 @@ class EasierTrain(tk.Tk):
             self.canvas.create_image( self.w, 0,\
                                   image=self.highlight_pic,\
                                   anchor = 'nw' )
+
+    def OnNextClick(self):
+        '''
+            Loads the next picture.
+        '''
+        self.PrevNextHandler()
         
 
     def OnPrevClick(self):
         '''
-            Loads the previous image in the folder.
-            Preserves highlighting in previous picture.
+            Loads the previous picture.
         '''
-        ###############################################
-        # Same as OnNextClick except with a decrement #
-        ###############################################
-
-        self.threshold_list[self.img_index] = self.scale.get()
-        self.img_index = (self.img_index-1) % len(self.imgpaths)
-        self.scale.set( self.threshold_list[self.img_index] )
-        
-        self.drawImg()
-
-        if self.img_index not in self.highlight_area:
-            self.highlight_area[self.img_index] = []
-        
-        else:
-        
-            color = edge.average_color(self.pixels,\
-                                   self.w, self.h,\
-                                   self.highlight_area[self.img_index])
-        
-            self.highlight_img = edge.highlight(self.edge_pixels,\
-                                            self.w, self.h,\
-                                            self.highlight_area[\
-                                            self.img_index], color)
-        
-            self.highlight_pic = ImageTk.PhotoImage(self.highlight_img)
-
-            self.canvas.create_image( self.w, 0,\
-                                  image=self.highlight_pic,\
-                                  anchor = 'nw' )
+        self.PrevNextHandler(False)
         
     def OnAddClick(self):
         '''
