@@ -39,7 +39,6 @@ import os
 import Tkinter as tk
 import ImageTk
 import generator
-import stat #verify image files
 
 class EasierTrain(tk.Tk):
     '''
