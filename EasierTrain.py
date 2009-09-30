@@ -561,7 +561,7 @@ class EasierTrain(tk.Tk):
                 toRemove.append( ( self.colorChkbtn[i],\
                                    self.colorNames[i],\
                                    self.colorFrames[i] ) )
-                self.master_color_list.remove( i )
+                self.master_color_list.pop( i )
 
         for x in toRemove:
             x[0].grid_remove()
