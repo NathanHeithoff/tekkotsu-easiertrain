@@ -99,22 +99,22 @@ def generate_color_space(colors, imgdir):
                     [pixels[x + y * width][0]>>4] \
                     [pixels[x + y * width][1]>>2] \
                     [pixels[x + y * width][2]>>2] \
-                    [colorindex] += 10000000000/totalarea
+                    [colorindex] += 1000/totalarea
                     
                         
-                    for Y in xrange(-1,2):
-                        for U in xrange(-3,4):
-                            for V in xrange(-3,4):
-                                try:
+                    #for Y in xrange(-1,2):
+                    #    for U in xrange(-3,4):
+                    #        for V in xrange(-3,4):
+                    #            try:
                                     
-                                    colorspace                        \
-                                    [(pixels[x + y * width][0]>>4)+Y] \
-                                    [(pixels[x + y * width][1]>>2)+U] \
-                                    [(pixels[x + y * width][2]>>2)+V] \
-                                    [colorindex] += 100000/totalarea
+                    #                colorspace                        \
+                    #                [(pixels[x + y * width][0]>>4)+Y] \
+                    #                [(pixels[x + y * width][1]>>2)+U] \
+                    #                [(pixels[x + y * width][2]>>2)+V] \
+                    #                [colorindex] += 1/totalarea
                                     
-                                except IndexError:
-                                    pass
+                    #            except IndexError:
+                    #                pass
                                         
                                     
         
