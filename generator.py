@@ -123,7 +123,11 @@ def generate_color_space(colors, imgdir):
             for Y in xrange(0,Ymax):
                     
 #For each point in YUV space, pick the best candidate print it as a char
-                tmfile.write( str(list_int_max(colorspace[Y][U][V]) ) )
+                tmfile.write(\
+                             chr(\
+                             str(list_int_max(colorspace[Y][U][V])\
+                             )\
+                             ) )
 
 def list_int_max(list):
     '''
