@@ -95,10 +95,12 @@ def generate_color_space(colors, imgdir):
             for area in color[0][picture]:
                 for(x,y) in area:
                     
+                    #Python Image Library actually has it in YCrCb order. 
+                    
                     colorspace \
                     [pixels[x + y * width][0]>>4] \
-                    [pixels[x + y * width][1]>>2] \
                     [pixels[x + y * width][2]>>2] \
+                    [pixels[x + y * width][1]>>2] \
                     [colorindex] += 1000/totalarea
                     
                         
@@ -118,9 +120,10 @@ def generate_color_space(colors, imgdir):
                                         
                                     
         
-    for V in xrange(0,Vmax):
+    for Y in xrange(0,Ymax):
         for U in xrange(0,Umax):
-            for Y in xrange(0,Ymax):
+            for V in xrange(0,Vmax):
+
                     
 #For each point in YUV space, pick the best candidate print it as a char
                 tmfile.write(\
