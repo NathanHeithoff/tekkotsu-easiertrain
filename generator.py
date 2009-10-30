@@ -36,7 +36,7 @@ def generate_color_space(colors, imgdir):
             [ [ { picture_index_int : Area } , average_color_tuple , colorname], (repeat that for all colors) ]
         with Area being the list of list of adjacent points in a picture.
     '''
-    colfile = open("easiertrain.col", 'w')
+    colfile = open("default.col", 'w')
     
     colfile.write("0 (128 128 128) \"unclassified\" 8 1.00")
     colfile.write(chr(10))
@@ -68,7 +68,7 @@ def generate_color_space(colors, imgdir):
                          for y in xrange(0,Umax)]          \
                          for z in xrange(0,Ymax)]
     
-    tmfile = open("easiertrain.tm", 'w')
+    tmfile = open("default.tm", 'w')
     
     #Header information for the tm file.
     tmfile.write("TMAP")
@@ -95,42 +95,45 @@ def generate_color_space(colors, imgdir):
             for area in color[0][picture]:
                 for(x,y) in area:
                     
-                    #Python Image Library actually has it in YCrCb order. 
+                    #Both Tekkotsu and Python Image Library has it in YCrCb order,
                     
                     colorspace \
                     [pixels[x + y * width][0]>>4] \
-                    [pixels[x + y * width][2]>>2] \
                     [pixels[x + y * width][1]>>2] \
-                    [colorindex] += 1000/totalarea
-                    
+                    [pixels[x + y * width][2]>>2] \
+                    [colorindex] += 10000 #/totalarea
+
+                    # Fill in colorspace around a given instance.
+                    #
                         
-                    #for Y in xrange(-1,2):
-                    #    for U in xrange(-3,4):
-                    #        for V in xrange(-3,4):
-                    #            try:
+                    for Y in xrange(-2,2):
+                        for U in xrange(-4,4):
+                            for V in xrange(-4,4):
+                                try:
                                     
-                    #                colorspace                        \
-                    #                [(pixels[x + y * width][0]>>4)+Y] \
-                    #                [(pixels[x + y * width][1]>>2)+U] \
-                    #                [(pixels[x + y * width][2]>>2)+V] \
-                    #                [colorindex] += 1/totalarea
+                                    colorspace                        \
+                                    [(pixels[x + y * width][0]>>4)+Y] \
+                                    [(pixels[x + y * width][1]>>2)+U] \
+                                    [(pixels[x + y * width][2]>>2)+V] \
+                                    [colorindex] += 1 #/totalarea
                                     
-                    #            except IndexError:
-                    #                pass
+                                except IndexError:
+                                    pass
                                         
                                     
         
     for Y in xrange(0,Ymax):
-        for U in xrange(0,Umax):
-            for V in xrange(0,Vmax):
+        for V in xrange(0,Vmax):
+            for U in xrange(0,Umax):
 
-                    
+                
 #For each point in YUV space, pick the best candidate print it as a char
                 tmfile.write(\
                              chr(\
-                             str(list_int_max(colorspace[Y][U][V])\
+                             list_int_max(colorspace[Y][U][V])\
                              )\
-                             ) )
+                             )
+    print "done"
 
 def list_int_max(list):
     '''
