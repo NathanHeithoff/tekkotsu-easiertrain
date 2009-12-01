@@ -32,8 +32,8 @@ def generate_color_space(colors, imgdir):
         the one with the highest amount on a particular YUV point is the
         winner ( or undefined if no color claims that spot )
         
-        colors comes in as:
-            [ [ { picture_index_int : Area } , average_color_tuple , colorname], (repeat that for all colors) ]
+        color data comes in as a list of:
+            [ [ { picture_path : Area } , average_color_tuple , colorname] ]
         with Area being the list of list of adjacent points in a picture.
     '''
     colfile = open("default.col", 'w')
@@ -88,7 +88,7 @@ def generate_color_space(colors, imgdir):
                 totalarea += len(area)
                 
         for picture in color[0]:
-            img = Image.open( imgdir[picture] ).convert("YCbCr")
+            img = Image.open( picture ).convert("YCbCr")
             
             pixels = list( img.getdata() )
             width, height = img.size

@@ -39,6 +39,7 @@ import os
 import Tkinter as tk
 import ImageTk
 import generator
+import pickle # serialization
 
 class EasierTrain(tk.Tk):
     '''
@@ -51,11 +52,11 @@ class EasierTrain(tk.Tk):
         self.imgpaths = [] # Paths to images in the folder
 
         # Color palette widgets
-        self.colorNames = [] # name entries
+        self.colorNameInputs = [] # name entries
         self.colorFrames = [] # average color of the selection
         self.colorChkbtn = [] # checkbox for bulk operation i.e. delete
 
-        self.threshold_list = []
+        self.thresholds = dict() # stores previous threshold associated with image
 
         self.img = None # stores the current image
         self.w, self.h = None, None # width and height of the current image
@@ -64,7 +65,8 @@ class EasierTrain(tk.Tk):
         self.edge_pic = None # printed to self.canvas
 
         self.img_index = 0 # stores the place of the current image in imgpaths
-        self.highlight_area = {self.img_index:[]} # stores the active area selection
+        self.img_path = '' # stores the path of the current image
+        self.highlight_area = dict() # stores the active area selection
         self.master_color_list = [] # stores all the data for added colors
 
         self.highlight_img = None # image data for current selection
@@ -84,18 +86,22 @@ class EasierTrain(tk.Tk):
             try:
                 tmpImg = Image.open( relpath )
             except(IOError):
-                    print "Not a compatible image file", relpath
-                    continue
+                print "Not a compatible image file", relpath
+                continue
 
             print "Loading file", relpath
             self.imgpaths.append( relpath )
-            self.threshold_list.append(250)
+            self.thresholds[relpath] = 250
 
-        self.initialize()
+        if len(self.imgpaths) != 0:
+            self.img_path = self.imgpaths[0]
 
-    def initialize(self):
+#TODO why was there a separate initialize function?
+#        self.initialize()
+#
+#    def initialize(self):
         '''
-            Sets up the GUI elements and events.
+            Set up the GUI elements and events.
                 Toolbox:
                     Navigation (previous/next picture)
                     Add color to palette
@@ -181,7 +187,7 @@ class EasierTrain(tk.Tk):
             Draws the current image to the screen.
         '''
         
-        self.img = Image.open( self.imgpaths[self.img_index] )
+        self.img = Image.open( self.img_path )
         self.pixels = list( self.img.getdata() )
         self.w, self.h = self.img.size
         self.edge_img = edge.prewitt( self.pixels,\
@@ -214,7 +220,7 @@ class EasierTrain(tk.Tk):
         '''
             Populates the color palette.
         '''
-        for obj in self.colorNames:
+        for obj in self.colorNameInputs:
             obj.grid_remove()
         for obj in self.colorFrames:
             obj.grid_remove()
@@ -222,11 +228,11 @@ class EasierTrain(tk.Tk):
             obj.grid_remove()
         
         j=1
-        for i in range( 0, len( self.colorNames ) ):
+        for i in range( 0, len( self.colorNameInputs ) ):
             if i%10==0:
                 j+=1
             self.colorChkbtn[i].grid( column=j*3, row=i%10 )
-            self.colorNames[i].grid( column=j*3+1, row=i%10 )
+            self.colorNameInputs[i].grid( column=j*3+1, row=i%10 )
             self.colorFrames[i].grid( column=j*3+2, row=i%10 )
 
     def OnCanvasClick(self,event):
@@ -237,11 +243,11 @@ class EasierTrain(tk.Tk):
         self.edge_pixels = list( self.edge_img.getdata() )
 
         # Clear whatever area was already on this picture
-        self.highlight_area[self.img_index] = []
+        self.highlight_area[self.img_path] = []
         
         
         #Grab the area around the event
-        self.highlight_area[self.img_index].append(\
+        self.highlight_area[self.img_path].append(\
                                 edge.getarea(self.edge_pixels, self.w, self.h,\
                                 int(self.canvas.canvasx(event.x) % self.w),\
                                 int(self.canvas.canvasx(event.y) ) ) )
@@ -249,13 +255,13 @@ class EasierTrain(tk.Tk):
         #Get the color
         color = edge.average_color(self.pixels,\
                                    self.w, self.h,\
-                                   self.highlight_area[self.img_index])
+                                   self.highlight_area[self.img_path])
         
         #Color in the area
         self.highlight_img = edge.highlight(self.edge_pixels,\
                                             self.w, self.h,\
                                             self.highlight_area[\
-                                                self.img_index], color)
+                                                self.img_path], color)
         
         self.highlight_pic = ImageTk.PhotoImage(self.highlight_img)
 
@@ -274,7 +280,7 @@ class EasierTrain(tk.Tk):
         #n is the position in the list of an area of adjacent pixels
         #i is the actual list of adjacent pixels
         #If the event is within i, then there's no need to add to area
-        for i in self.highlight_area[self.img_index]:
+        for i in self.highlight_area[self.img_path]:
                 try:
                     dummy = i.index( (self.canvas.canvasx(event.x)%self.w,\
                                     self.canvas.canvasx(event.y)) )
@@ -283,18 +289,18 @@ class EasierTrain(tk.Tk):
                     continue
                 
         self.edge_pixels = list( self.edge_img.getdata() )
-        self.highlight_area[self.img_index].append(\
+        self.highlight_area[self.img_path].append(\
             edge.getarea( self.edge_pixels, self.w, self.h, \
                           int(self.canvas.canvasx(event.x)%self.w),\
                           int(self.canvas.canvasx(event.y)) ) )
             
         color = edge.average_color( self.pixels,\
                                     self.w, self.h,\
-                                    self.highlight_area[self.img_index] )
+                                    self.highlight_area[self.img_path] )
             
         self.highlight_img = edge.highlight(self.edge_pixels,\
                                             self.w, self.h,\
-                                            self.highlight_area[self.img_index], color)
+                                            self.highlight_area[self.img_path], color)
             
         self.highlight_pic = ImageTk.PhotoImage(self.highlight_img)
         self.canvas.create_image( self.w, 0,\
@@ -314,7 +320,7 @@ class EasierTrain(tk.Tk):
         #i is the actual list of adjacent pixels
         #If the event is within i, index will succeed and delete will be the area number
         #Otherwise, index will raise an error and delete won't change.
-        for n,i in enumerate(self.highlight_area[self.img_index]):
+        for n,i in enumerate(self.highlight_area[self.img_path]):
                 try:
                     dummy = i.index( (self.canvas.canvasx(event.x)%self.w,\
                                      self.canvas.canvasx(event.y)) )
@@ -325,22 +331,22 @@ class EasierTrain(tk.Tk):
         self.edge_pixels = list( self.edge_img.getdata() )
         
         if delete != -1:
-            self.highlight_area[self.img_index].pop(delete)
+            self.highlight_area[self.img_path].pop(delete)
             
         else:
             
-            self.highlight_area[self.img_index].append(\
+            self.highlight_area[self.img_path].append(\
                 edge.getarea( self.edge_pixels, self.w, self.h,\
                               int(self.canvas.canvasx(event.x)%self.w),\
                               int(self.canvas.canvasx(event.y)) ) )
             
         color = edge.average_color( self.pixels,\
                                     self.w, self.h,\
-                                    self.highlight_area[self.img_index] )
+                                    self.highlight_area[self.img_path] )
             
         self.highlight_img = edge.highlight( self.edge_pixels,\
                                              self.w, self.h,\
-                                             self.highlight_area[self.img_index], color )
+                                             self.highlight_area[self.img_path], color )
             
         self.highlight_pic = ImageTk.PhotoImage(self.highlight_img)
         self.canvas.create_image( self.w, 0,\
@@ -359,11 +365,13 @@ class EasierTrain(tk.Tk):
         self.edge_img = edge.prewitt( self.pixels,\
                                       self.w, self.h,\
                                       self.scale.get() )
-        self.highlight_area[self.img_index] = []
+        self.highlight_area[self.img_path] = []
 
         # draw the new image
         self.edge_pic = ImageTk.PhotoImage(self.edge_img)
         self.canvas.create_image( self.w, 0, image=self.edge_pic, anchor='nw' )
+
+        self.thresholds[self.img_path] = self.scale.get()
 
     def OnManualThresholdClick(self):
         '''
@@ -389,13 +397,15 @@ class EasierTrain(tk.Tk):
             target = -1 
 
         # store the current threshold for later reference
-        self.threshold_list[self.img_index] = self.scale.get()
+        self.thresholds[self.img_path] = self.scale.get()
 
         # increment to the next image
         self.img_index = (self.img_index+target) % len(self.imgpaths)
 
-        # restore the threshold of the new image, if any
-        self.scale.set( self.threshold_list[self.img_index] )
+        self.img_path = self.imgpaths[self.img_index]
+
+        # restore the threshold of the new image
+        self.scale.set( self.thresholds[self.img_path] )
         self.drawImg()
         
         if self.img_index not in self.highlight_area:
@@ -409,7 +419,7 @@ class EasierTrain(tk.Tk):
         
             self.highlight_img = edge.highlight(
                 self.edge_pixels, self.w, self.h,\
-                self.highlight_area[self.img_index], color )
+                self.highlight_area[self.img_path], color )
         
             self.highlight_pic = ImageTk.PhotoImage(self.highlight_img)
 
@@ -436,7 +446,7 @@ class EasierTrain(tk.Tk):
             Checks that <20 colors are in the palette and that the average
             color is not (0,0,0) i.e. no selection.
         '''
-        if len( self.colorNames ) == 20:
+        if len( self.colorNameInputs ) == 20:
             print "ERROR: Tekkotsu is currently limited to 20 colors."
             print "       Delete some colors first."
             return
@@ -444,19 +454,19 @@ class EasierTrain(tk.Tk):
         R, G, B = (-1,-1,-1)
         total_area = 0
         
-        for i in self.highlight_area.keys():
-            add_img = Image.open( self.imgpaths[i] )
-            add_pixels = list( self.img.getdata() )
+        for highlighted_img_path in self.highlight_area.keys():
+            add_img = Image.open( highlighted_img_path )
+            add_pixels = list( add_img.getdata() )
             add_w, add_h = add_img.size
             
             this_area = 0
-            for area in self.highlight_area[i]:
+            for area in self.highlight_area[highlighted_img_path]:
                 this_area += len(area)
                 
                     
             color = edge.average_color( add_pixels,\
                                     add_w, add_h,\
-                                    self.highlight_area[i] )
+                                    self.highlight_area[highlighted_img_path] )
             
             try:
                 
@@ -475,9 +485,6 @@ class EasierTrain(tk.Tk):
         if color == (-1,-1,-1):
             return
         
-        self.master_color_list.append( [self.highlight_area , color, "Will be changed when saving"] )
-        self.highlight_area = {self.img_index:[]}
-
         # Bind checkbutton variable to the widget instance
         # because Tkinter is silly
         v = tk.IntVar()
@@ -504,13 +511,16 @@ class EasierTrain(tk.Tk):
         # Get a default name for the new color
         i=0
         colorNum = 1
-        while i < len(self.colorNames):
-            if self.colorNames[i].get() == "New color "+str(colorNum):
+        while i < len(self.colorNameInputs):
+            if self.colorNameInputs[i].get() == "New color "+str(colorNum):
                 colorNum+=1
                 i=0
             else:
                 i+=1
                 
+        self.master_color_list.append( [self.highlight_area , color, "New color"+str(colorNum)] )
+        self.highlight_area = dict()
+
         # make a text entry field
         newEntry = tk.Entry( self.palette, width=10 )
         newEntry.insert( 0, "New color "+str(colorNum) )
@@ -526,24 +536,27 @@ class EasierTrain(tk.Tk):
         newFrame.bind( "<Button-1>", self.OnColorClick )
 
         self.colorChkbtn.append(newChkbtn)
-        self.colorNames.append(newEntry)
+        self.colorNameInputs.append(newEntry)
         self.colorFrames.append(newFrame)
 
         self.drawPalette()
-        
-        
-        
-        
-        
-        
-
 
     def OnSaveClick(self):
         
+        # Update the names of the colors from the Entry widgets
         for i in xrange( 0, len( self.master_color_list ) ):
-            self.master_color_list[i][2] = self.colorNames[i].get()
+            self.master_color_list[i][2] = self.colorNameInputs[i].get()
         
         generator.generate_color_space(self.master_color_list, self.imgpaths)
+
+        toSerialize = (self.master_color_list,
+                       self.thresholds)
+
+        try:
+            pickle.dump(toSerialize, open("default.et", "w"))
+
+        except(pickle.PicklingError):
+            print "Failed to write default.et"
 
     def OnLoadClick(self):
         '''TODO'''
@@ -559,7 +572,7 @@ class EasierTrain(tk.Tk):
         for i in reversed(range( 0, len( self.colorChkbtn ) )):
             if self.colorChkbtn[i].var.get() == 1:
                 toRemove.append( ( self.colorChkbtn[i],\
-                                   self.colorNames[i],\
+                                   self.colorNameInputs[i],\
                                    self.colorFrames[i] ) )
                 self.master_color_list.pop( i )
 
@@ -567,7 +580,7 @@ class EasierTrain(tk.Tk):
             x[0].grid_remove()
             self.colorChkbtn.remove(x[0])
             x[1].grid_remove()
-            self.colorNames.remove(x[1])
+            self.colorNameInputs.remove(x[1])
             x[2].grid_remove()
             self.colorFrames.remove(x[2])
         
@@ -583,7 +596,7 @@ if __name__ == "__main__":
     #    app = EasierTrain( None, '.' )
     #else:
     
-    #OPTIONAL comment these lines if psyco is available on your platform
+    #OPTIONAL uncomment these lines if psyco is available on your platform
     import psyco
     psyco.full()
     
