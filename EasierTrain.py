@@ -182,6 +182,31 @@ class EasierTrain(tk.Tk):
                                                command=self.OnDeleteClick )
         self.deleteBtn.grid( column=0, row=0 )
 
+    def rgbTupleToHex(self, RGB):
+        '''
+            Takes an integer tuple of the form (R,G,B)
+            Returns a hex string of the form "#xxxxxx"
+        '''
+
+        #convert R, G, B integers to hex & convert hex numbers to strings
+        color = (str(hex(RGB[0])),str(hex(RGB[1])),str(hex(RGB[2])))
+
+        hexcol='#'
+        if ( len(color[0]) == 4 ):
+            hexcol+=color[0][2]+color[0][3]
+        else:
+            hexcol+='0'+color[0][2]
+        if ( len(color[1]) == 4 ):
+            hexcol+=color[1][2]+color[1][3]
+        else:
+            hexcol+='0'+color[1][2]
+        if ( len(color[2]) == 4 ):
+            hexcol+=color[2][2]+color[2][3]
+        else:
+            hexcol+='0'+color[2][2]
+
+        return hexcol
+
     def drawImg(self):
         '''
             Draws the current image to the screen.
@@ -355,7 +380,7 @@ class EasierTrain(tk.Tk):
     def OnScaleRelease(self, event):
         '''
             Adjusts the threshold based on the value of the scale widget.
-            Redraws edge_img and edge_pic, deletes any highlighting
+            Redraws edge_img and edge_pic; deletes any highlighting
             for the current picture.
         '''
         self.canvas.delete( self.edge_pic )
@@ -484,29 +509,8 @@ class EasierTrain(tk.Tk):
         
         if color == (-1,-1,-1):
             return
-        
-        # Bind checkbutton variable to the widget instance
-        # because Tkinter is silly
-        v = tk.IntVar()
-        newChkbtn = tk.Checkbutton( self.palette, variable=v )
-        newChkbtn.var = v
 
-        # Convert decimal RGB color tuple to hex
-        # Python makes me do things that makes my inner C programmer cry
-        color = (str(hex(color[0])),str(hex(color[1])),str(hex(color[2])))
-        hexcol='#'
-        if ( len(color[0]) == 4 ):
-            hexcol+=color[0][2]+color[0][3]
-        else:
-            hexcol+='0'+color[0][2]
-        if ( len(color[1]) == 4 ):
-            hexcol+=color[1][2]+color[1][3]
-        else:
-            hexcol+='0'+color[1][2]
-        if ( len(color[2]) == 4 ):
-            hexcol+=color[2][2]+color[2][3]
-        else:
-            hexcol+='0'+color[2][2]
+        hexcol = self.rgbTupleToHex(color)
 
         # Get a default name for the new color
         i=0
@@ -521,13 +525,26 @@ class EasierTrain(tk.Tk):
         self.master_color_list.append( [self.highlight_area , color, "New color"+str(colorNum)] )
         self.highlight_area = dict()
 
+        self.AppendToPalette( "New color "+str(colorNum), hexcol )
+
+    def AppendToPalette(self, name, hexcol, draw=True):
+        '''
+            Takes a name and hex color and appends it to the color palette.
+        '''
+        
+        # Bind checkbutton variable to the widget instance
+        # because Tkinter is silly
+        v = tk.IntVar()
+        newChkbtn = tk.Checkbutton( self.palette, variable=v )
+        newChkbtn.var = v
+
         # make a text entry field
         newEntry = tk.Entry( self.palette, width=10 )
-        newEntry.insert( 0, "New color "+str(colorNum) )
+        newEntry.insert( 0, name )
 
         # make a new color frame
         # TODO make the mouse curor change on mouse-over to reflect
-        #      clickable status
+        # clickable status
         newFrame = tk.Frame( self.palette,\
                              height=25, width=40,\
                              relief='raised',\
@@ -539,7 +556,8 @@ class EasierTrain(tk.Tk):
         self.colorNameInputs.append(newEntry)
         self.colorFrames.append(newFrame)
 
-        self.drawPalette()
+        if draw:
+            self.drawPalette()
 
     def OnSaveClick(self):
         
@@ -549,8 +567,8 @@ class EasierTrain(tk.Tk):
         
         generator.generate_color_space(self.master_color_list, self.imgpaths)
 
-        toSerialize = (self.master_color_list,
-                       self.thresholds)
+        toSerialize = [self.master_color_list,
+                       self.thresholds]
 
         try:
             pickle.dump(toSerialize, open("default.et", "w"))
@@ -559,9 +577,17 @@ class EasierTrain(tk.Tk):
             print "Failed to write default.et"
 
     def OnLoadClick(self):
-        '''TODO'''
-        print "OnLoadClick not implemented! Unable to resore previous sessions."
-        pass
+        deserialized = pickle.load(open("default.et", "r"))
+
+        self.master_color_list = deserialized[0]
+        self.thresholds = deserialized[1]
+
+        for color_data in deserialized[0]:
+            self.highlighted_area = color_data[0]
+            hexcol = rgbTupleToHex(color_data[1])
+            self.AppendToPalette(hexcol, color_data[2], false)
+
+        self.drawPalette()
 
     def OnDeleteClick(self):
         '''
