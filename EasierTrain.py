@@ -434,13 +434,13 @@ class EasierTrain(tk.Tk):
         self.drawImg()
         
         if self.img_index not in self.highlight_area:
-            self.highlight_area[self.img_index] = []
+            self.highlight_area[self.img_path] = []
         
         else:
             # draw the previous highlighting of the new image, if any
             color = edge.average_color(self.pixels,\
                                    self.w, self.h,\
-                                   self.highlight_area[self.img_index])
+                                   self.highlight_area[self.img_path])
         
             self.highlight_img = edge.highlight(
                 self.edge_pixels, self.w, self.h,\
