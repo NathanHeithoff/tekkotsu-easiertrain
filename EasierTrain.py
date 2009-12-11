@@ -584,8 +584,8 @@ class EasierTrain(tk.Tk):
 
         for color_data in deserialized[0]:
             self.highlighted_area = color_data[0]
-            hexcol = rgbTupleToHex(color_data[1])
-            self.AppendToPalette(hexcol, color_data[2], false)
+            hexcol = self.rgbTupleToHex(color_data[1])
+            self.AppendToPalette(color_data[2], hexcol, False)
 
         self.drawPalette()
 
