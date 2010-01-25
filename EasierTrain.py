@@ -176,6 +176,10 @@ class EasierTrain(tk.Tk):
         self.load = tk.Button( self.toolbox, text='Load',\
                                              command=self.OnLoadClick )
         self.load.grid( column=2, row=1, padx=2, pady=3 )
+        
+        self.quit = tk.Button( self.toolbox, text='Quit',\
+                                             command=self.OnQuitClick )
+        self.quit.grid( column=3, row=1, padx=2, pady=3 )
 
         # Delete button for color palette
         self.deleteBtn = tk.Button( self.palette, text='Delete',\
@@ -611,6 +615,41 @@ class EasierTrain(tk.Tk):
             self.colorFrames.remove(x[2])
         
         self.drawPalette()
+        
+    def OnQuitClick(self):
+        '''
+            Exits the program.
+            The program will ask if you want to save.
+        '''
+        self.quit = tk.Toplevel()
+        
+        self.quit.title( "Quit" )
+
+        self.savequit = tk.Button( self.quit, text = "Save before exit", \
+                                    command=self.OnSaveQuitClick)
+        self.savequit.grid( column=0, row=0, padx=2, pady=3 )
+
+        self.savequit = tk.Button( self.quit, text = "Exit without saving", \
+                                    command=self.OnExitQuitClick)
+        self.savequit.grid( column=1, row=0, padx=2, pady=3 )
+
+        self.savequit = tk.Button( self.quit, text = "Cancel", \
+                                   command=self.OnCancelQuitClick)
+        self.savequit.grid( column=2, row=0, padx=2, pady=3 )
+        
+    def OnSaveQuitClick(self):
+        self.OnSaveClick()
+        sys.exit(0)
+        
+    def OnExitQuitClick(self):
+        sys.exit(0)
+        
+    def OnCancelQuitClick(self):
+        self.quit.destroy()
+
+    def OnColorClick(self, event):
+        print "TODO"
+        pass
 
     def OnColorClick(self, event):
         print "TODO"
